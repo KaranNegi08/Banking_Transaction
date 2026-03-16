@@ -1,5 +1,6 @@
 const userModel= require('../models/user.model.js');
 const jwt= require('jsonwebtoken');
+const emailService= require('../services/email.service.js');
 
 async function userRegisterController(req,res){
     const {email, name, password} = req.body;
@@ -28,9 +29,16 @@ async function userRegisterController(req,res){
     });
 
     const token= jwt.sign({
-        userId:user._id
+        id:user._id
     }, process.env.JWT_SECRET_KEY, {expiresIn:"7d"});
     res.cookie("token", token);
+    
+    const check= await emailService.sendRegistrationEmail(user.email, user.name);
+    if(check){
+        console.log("Registration email sent successfully");    
+    }else{
+        console.log("Failed to send registration email");
+    }
 
     return res.status(201).json({
         success:true,
@@ -42,7 +50,7 @@ async function userRegisterController(req,res){
         },
         token
     });
-
+   
 }
 
 async function userLoginController(req,res){
